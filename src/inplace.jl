@@ -80,8 +80,10 @@ function inv! end
 
 inv0(A::AbstractArray, b::Number=1) = similar(A) .= b ./ A # maps Adjoint -> Adjoint etc
 
+inv_(b::Number) = 1/b # for iscale_
 inv_(A::AbstractArray, b::Number=1) = inv!(similar(A), A, b)
 
+inv!(b::Number) = 1/b
 function inv!(C::AbstractArray, A::AbstractArray, b::Number=1)
     if length(A) < 500
         A .= b ./ A
@@ -121,9 +123,9 @@ scale!(A::Matrix, r::RVector) = rmul!(A, Diagonal(transpose(r)))
 scale_(A::AbstractArray{T,N}, B::AbstractArray{T,N}) where {T,N} = similar(A) .= A .* B
 scale!(A::AbstractArray{T,N}, B::AbstractArray{T,N}) where {T,N} = A .= A .* B
 
-scale0(A::AbstractArray, b, cdef...) = Broadcast.broadcast(*,A, b, cdef...)
-scale_(A::AbstractArray, b, cdef...) = scale_(scale_(A, b), cdef...)
-scale!(A::AbstractArray, b, cdef...) = scale!(scale!(A, b), cdef...)
+# scale0(A::AbstractArray, b, cdef...) = Broadcast.broadcast(*,A, b, cdef...)
+# scale_(A::AbstractArray, b, cdef...) = scale_(scale_(A, b), cdef...)
+# scale!(A::AbstractArray, b, cdef...) = scale!(scale!(A, b), cdef...)
 
 
 scale_(name::Symbol, A::Array, b::Number) = rmul!(copy_(name, A), b)
