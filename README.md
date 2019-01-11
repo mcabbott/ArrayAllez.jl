@@ -8,7 +8,7 @@
 add  Yeppp  Flux  https://github.com/platawiec/AppleAccelerate.jl#julia07
 ```
 
-## `log! ∘ exp!`
+### `log! ∘ exp!`
 
 This began as a way to more conveniently choose between [Yeppp!](https://github.com/JuliaMath/Yeppp.jl) 
 and [AppleAccelerate](https://github.com/JuliaMath/AppleAccelerate.jl). Or neither, just `@threads`: 
@@ -39,7 +39,7 @@ iscale!(m, r)  # like m ./ r but mutating.
 m
 ```
 
-## `∇`
+### `∇`
 
 These commands all make some attempt to define [Flux](https://github.com/FluxML/Flux.jl) gradients, 
 but caveat emptor. There is also an `exp!!` which mutates both its forward input and its backward gradient, 
@@ -57,7 +57,7 @@ x.grad
 This package also defines gradients for `prod` (overwriting an incorrect one) and `cumprod`, 
 as in [this PR](https://github.com/FluxML/Flux.jl/pull/524). 
 
-## `Array_`
+### `Array_`
 
 An experiment with [LRUCache](https://github.com/JuliaCollections/LRUCache.jl):
 
@@ -66,14 +66,14 @@ x = rand(2000)' # below this size, falls back
 
 copy_(:copy, x)
 similar_(:sim, x)
-Array_{Float64}(:new, 2,1000)
+Array_{Float64}(:new, 5,1000) # @btime 200 ns, 32 bytes
 
 inv_(:inv, x) # most of the _ functions can opt-in
 ```
 
-## See Also
+### See Also
 
-* [Vectorize.jl](https://github.com/rprechelt/Vectorize.jl), a more comprehensive wrapper which includes Intel MKL. 
+* [Vectorize.jl](https://github.com/rprechelt/Vectorize.jl) is a more comprehensive wrapper, including Intel MKL. 
 
 * [Strided.jl](https://github.com/Jutho/Strided.jl) adds @threads to broadcasting. 
 
