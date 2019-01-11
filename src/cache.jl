@@ -45,6 +45,8 @@ end
 struct Array_{T} end
 
 @doc @doc(similar_)
+Array_(any...) = Array_{Float64}(any...)
+
 Array_{T}(sz::Vararg{Int}) where {T} =  Array_{T}(:Array_, sz)
 
 Array_{T}(name::Symbol, sz::Vararg{Int}) where {T} =  Array_{T}(name, sz)

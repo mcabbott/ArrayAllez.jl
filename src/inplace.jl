@@ -154,6 +154,11 @@ iscale!!(A::AbstractArray, b) = scale!(A, inv!(b))
 
 iscale_(name::Symbol, A::AbstractArray, b) = scale_(name, A, inv_(name, b))
 
+#========== sum_ ==========#
+
+export sum_
+
+sum_(A::AbstractArray) = sum(A) # differs only in backward pass
 
 #========== Accelerators ==========#
 

@@ -1,17 +1,16 @@
 IVERBOSE && @info "ArrayAllez loaded in-place code for Flux"
 
 using .Flux
-using .Flux.Tracker: track, TrackedArray, TrackedReal, @grad
+using .Flux.Tracker: track, TrackedArray, TrackedReal, @grad, data, nobacksies # also for prod....jl
 
 """
     exp!!(A::TrackedArray)
-The gradient function of `exp!!` mutates its backward `Δ`.
+The gradient function of `exp!!` mutates its backward `Δ`, no copies. 
 Whether or not this is safe is for you to decide.
 It tends to lead to Inf problems when used inside `@btime`.
 
-More worryingly, note that if anything downstreadm mutates the result of `exp!`,
-then its gradients may be wrong, as they re-use this.
-I've fixed this for `exp_` by copying, perhaps I should do same to `exp!`.
+`exp!` makes one copy to ensure that, if its output is mutated, all is well. 
+`exp_` makes two. 
 """
 exp!(A::TrackedArray) = track(exp!, A)
 exp!!(A::TrackedArray) = track(exp!!, A)
@@ -26,7 +25,6 @@ exp0(A::TrackedArray) = exp.(A)
 end
 @grad function exp!(A::TrackedArray)
     expA = exp!(A.data)
-    # expA, Δ -> ( scale_(Δ, expA) ,)
     expA_copy = copy(expA)
     expA, Δ -> ( scale!(expA_copy, Δ) ,)
 end
@@ -34,6 +32,14 @@ end
     expA = exp!(A.data)
     expA, Δ -> ( scale!(Δ, expA) ,)
 end
+
+exp_(name::Symbol, A::TrackedArray) = track(exp_, name, A)
+@grad function exp_(name::Symbol, A::TrackedArray)
+    expA = exp_(name, A.data)
+    expA_copy = copy_(:exp_copy, expA) # opts in but has a distinct name? NOT safe
+    expA, Δ -> (nothing, scale!(expA_copy, Δ) ,)
+end
+
 
 """
     log!!(A::TrackedArray)
@@ -61,6 +67,14 @@ end
     logA = log!(A.data)
     logA, Δ -> ( scale!(Δ, invA) ,)
 end
+
+log_(name::Symbol, A::TrackedArray) = track(log_, name, A)
+@grad function log_(name::Symbol, A::TrackedArray)
+    invA = inv_(:log_copy, A.data)
+    logA = log_(name, A.data)
+    logA, Δ -> (nothing, scale!(invA, Δ) ,)
+end
+
 
 """
     scale!!(A::TrackedArray, b)
@@ -139,10 +153,29 @@ inv!!(A::TrackedArray, b::Number=1) = track(inv!!, A, b)
 
 inv0(A::TrackedArray, b) = 1 ./ A
 
+# @grad inv!(A::TrackedArray, b::Number=1) = inv_(A.data, b), Δ -> (-1 .* Δ .* b .* A.data .^ (-2) , nothing) # one copy
 @grad function inv_(A::TrackedArray, b=1)
     invA = inv_(A.data, b)
-    invA_copy = copy(invA) # keep gradient calc safe from downstream mutations
-    invA, Δ -> (invA_copy .= -1 .* Δ .* b .* invA_copy .^ 2 , nothing)
+    invA_copy = copy(invA) # don't invert twice? 
+    invA, Δ -> (invA_copy .= -1 .* Δ .* b .* invA_copy .^ 2 , nothing) # total one copy
 end
-@grad inv!(A::TrackedArray, b::Number=1) = inv!(A.data, b), Δ -> (-1 .* Δ .* b .* A .^ 2 , nothing)
+# @grad inv!(A::TrackedArray, b::Number=1) = inv!(A.data, b), Δ -> (-1 .* Δ .* b .* A.data .^ 2 , nothing) # one copy
+@grad function inv!(A::TrackedArray, b=1)
+    invA = inv!(A.data, b)
+    invA_copy = copy(invA) # keep gradient calc safe from downstream mutations
+    invA, Δ -> (invA_copy .= -1 .* Δ .* b .* invA_copy .^ 2 , nothing) # total one copy
+end
 @grad inv!!(A::TrackedArray, b::Number=1) = inv!(A.data, b), Δ -> (scale!(Δ,A,A,-b), nothing)
+
+
+using FillArrays
+"""
+    sum_(A)
+Like `sum(A)`, but with a `FilledArray.Ones` when going backwards.
+"""
+sum_(A::TrackedArray) = track(sum_, A)
+
+@grad function sum_(A::TrackedArray)
+    sum(A.data), Δ -> (Ones(A.data) ,)
+end
+

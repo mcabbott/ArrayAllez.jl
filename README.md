@@ -10,12 +10,13 @@ add  Yeppp  Flux  https://github.com/platawiec/AppleAccelerate.jl#julia07
 
 ## `log! ∘ exp!`
 
-Convenient vectorised operations... from [Yeppp!](https://github.com/JuliaMath/Yeppp.jl) or [AppleAccelerate](https://github.com/JuliaMath/AppleAccelerate.jl), or just using `@threads`: 
+This began as a way to more conveniently choose between [Yeppp!](https://github.com/JuliaMath/Yeppp.jl) 
+and [AppleAccelerate](https://github.com/JuliaMath/AppleAccelerate.jl). Or neither, just `@threads`: 
 
 ```julia
 x = rand(5);
 
-y = exp.(x)
+y = exp.(x)  # = exp0(x) 
 
 using Yeppp  # or using AppleAccelerate
 
@@ -40,18 +41,21 @@ m
 
 ## `∇`
 
-These commands all define `Flux` gradients.
+These commands all make some attempt to define [Flux](https://github.com/FluxML/Flux.jl) gradients, 
+but caveat emptor. There is also an `exp!!` which mutates both its forward input and its backward gradient, 
+which may be a terrible idea.
 
 ```julia
 using Flux
-x = param(rand(5))
+x = param(rand(5));
+y = exp_(x)
 
-y = exp!(x)
-
-Flux.back!(sum(y))
+Flux.back!(sum(exp!(x)))
 x.grad
 ```
-There is also an `exp!!` which mutates both its forward input and its backward gradient, which may be a terrible idea.
+
+This package also defines gradients for `prod` (overwriting an incorrect one) and `cumprod`, 
+as in [this PR](https://github.com/FluxML/Flux.jl/pull/524). 
 
 ## `Array_`
 
@@ -64,5 +68,13 @@ copy_(:copy, x)
 similar_(:sim, x)
 Array_{Float64}(:new, 2,1000)
 
-inv_(:inv, x) # all the _ functions can opt-in
+inv_(:inv, x) # most of the _ functions can opt-in
 ```
+
+## See Also
+
+* [Vectorize.jl](https://github.com/rprechelt/Vectorize.jl), a more comprehensive wrapper which includes Intel MKL. 
+
+* [Strided.jl](https://github.com/Jutho/Strided.jl) adds @threads to broadcasting. 
+
+
