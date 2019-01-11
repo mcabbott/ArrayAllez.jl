@@ -1,6 +1,4 @@
 
-IVERBOSE = true
-
 #========== exp! and log! ==========#
 
 export exp0, exp_, exp!, exp!!
@@ -16,14 +14,19 @@ function exp! end
 
 exp0(A) = similar(A) .= exp.(A) # maps Adjoint -> Adjoint etc
 
+@doc @doc(exp!)
 exp_(A) = exp!(similar(A), A)
 exp!(A) = exp!(A, A)
 exp!!(A) = exp!(A) # differs in gradient
 
 function exp!(B, A)
     @assert size(A)==size(B)
-    Threads.@threads for I in eachindex(A)
-        @inbounds B[I] = exp(A[I])
+    if length(A) < 200
+        B .= exp.(A)
+    else
+        Threads.@threads for I in eachindex(A)
+            @inbounds B[I] = exp(A[I])
+        end
     end
     B
 end
@@ -38,14 +41,19 @@ function log! end
 
 log0(A) = similar(A) .= log.(A)
 
+@doc @doc(log!)
 log_(A) = log!(similar(A), A)
 log!(A) = log!(A, A)
 log!!(A) = log!(A) # differs in gradient
 
 function log!(B, A)
     @assert size(A)==size(B)
-    Threads.@threads for I in eachindex(A)
-        @inbounds B[I] = log(A[I])
+    if length(A) < 200
+        B .= log.(A)
+    else
+        Threads.@threads for I in eachindex(A)
+            @inbounds B[I] = log(A[I])
+        end
     end
     B
 end
@@ -85,11 +93,12 @@ inv_(A::AbstractArray, b::Number=1) = inv!(similar(A), A, b)
 
 inv!(b::Number) = 1/b
 function inv!(C::AbstractArray, A::AbstractArray, b::Number=1)
-    if length(A) < 500
-        A .= b ./ A
+    @assert size(A)==size(C)
+    if length(A) < 1000
+        C .= b ./ A
     else
         Threads.@threads for I in eachindex(A)
-            @inbounds A[I] = b / A[I]
+            @inbounds C[I] = b / A[I]
         end
     end
     A
@@ -126,7 +135,6 @@ scale!(A::AbstractArray{T,N}, B::AbstractArray{T,N}) where {T,N} = A .= A .* B
 # scale0(A::AbstractArray, b, cdef...) = Broadcast.broadcast(*,A, b, cdef...)
 # scale_(A::AbstractArray, b, cdef...) = scale_(scale_(A, b), cdef...)
 # scale!(A::AbstractArray, b, cdef...) = scale!(scale!(A, b), cdef...)
-
 
 scale_(name::Symbol, A::Array, b::Number) = rmul!(copy_(name, A), b)
 scale_(name::Symbol, A::Matrix, v::Vector) = lmul!(Diagonal(v), copy_(name, A))
@@ -166,7 +174,7 @@ const CFloat = Union{Float64, Float32}
 const CFloatArray{N} = Array{<:CFloat, N}
 const CFloatMatrix = Matrix{<:CFloat}
 
-using Requires
+IVERBOSE = true
 
 VEC = ""
 function load_note(str)
@@ -179,6 +187,8 @@ function load_note(str)
         VEC *= " then $str"
     end
 end
+
+using Requires
 
 @init @require Yeppp = "6310b701-1812-5374-a82f-9f6f2d54a40a" begin
     using .Yeppp
