@@ -11,7 +11,7 @@ add  Yeppp  Flux  https://github.com/platawiec/AppleAccelerate.jl#julia07
 ### `log! ∘ exp!`
 
 This began as a way to more conveniently choose between [Yeppp!](https://github.com/JuliaMath/Yeppp.jl) 
-and [AppleAccelerate](https://github.com/JuliaMath/AppleAccelerate.jl). Or neither, just `@threads`: 
+and [AppleAccelerate](https://github.com/JuliaMath/AppleAccelerate.jl). Or neither... just loops with `@threads`?
 
 ```julia
 x = rand(5);
@@ -47,10 +47,11 @@ which may be a terrible idea.
 
 ```julia
 using Flux
-x = param(rand(5));
+x = param(randn(5));
 y = exp_(x)
 
-Flux.back!(sum(exp!(x)))
+Flux.back!(sum_(exp!(x)))
+x.data == y # true
 x.grad
 ```
 
@@ -59,10 +60,10 @@ as in [this PR](https://github.com/FluxML/Flux.jl/pull/524).
 
 ### `Array_`
 
-An experiment with [LRUCache](https://github.com/JuliaCollections/LRUCache.jl):
+An experiment with [LRUCache](https://github.com/JuliaCollections/LRUCache.jl) for working space:
 
 ```julia
-x = rand(2000)' # below this size, falls back
+x = rand(2000)' # turns off below this size
 
 copy_(:copy, x)
 similar_(:sim, x)
@@ -71,10 +72,28 @@ Array_{Float64}(:new, 5,1000) # @btime 200 ns, 32 bytes
 inv_(:inv, x) # most of the _ functions can opt-in
 ```
 
+### `broadsum`
+
+An attempt to keep broadcasting un-`materialize`d: 
+
+```julia
+v = rand(10^4);
+w = similar(v);
+
+sum(v .* v')  # @btime 400 ms, 760 MB
+broadsum(*, v, v')  # 7 ms, 112 bytes
+
+sum!(w, v .* v');        # 760 MB
+broadsum!(w, *, v, v');  # 96 bytes
+```
+
+The `broadsum!` (and `broadsum(..., dims=...)` versions now use a `BroadcastArray` from 
+[LazyArrays.jl](https://github.com/JuliaArrays/LazyArrays.jl#broadcasting). 
+Right now that is slow for a complete `sum`, so they do something more DIY.  
+
 ### See Also
 
 * [Vectorize.jl](https://github.com/rprechelt/Vectorize.jl) is a more comprehensive wrapper, including Intel MKL. 
 
 * [Strided.jl](https://github.com/Jutho/Strided.jl) adds @threads to broadcasting. 
-
 
