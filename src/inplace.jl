@@ -98,6 +98,7 @@ inv0(A::AbstractArray, b::Number=1) = similar(A) .= b ./ A # maps Adjoint -> Adj
 inv_(b::Number) = 1/b # for iscale_
 inv_(A::AbstractArray, b::Number=1) = inv!(similar(A), A, b)
 
+inv!(A::AbstractArray, b::Number=1) = inv!(A, A, 1)
 inv!(b::Number) = 1/b
 function inv!(C::AbstractArray, A::AbstractArray, b::Number=1)
     @assert size(A)==size(C)
