@@ -4,13 +4,13 @@ using .Flux
 using .Flux.Tracker: track, TrackedArray, TrackedReal, @grad, data, nobacksies # also for prod....jl
 
 """
+It is safe to mutate the forward output of `exp!` and `exp_`, 
+as they keep a copy for backwards use. 
+
     exp!!(A::TrackedArray)
 The gradient function of `exp!!` mutates its backward `Δ`, no copies. 
 Whether or not this is safe is for you to decide.
 It tends to lead to Inf problems when used inside `@btime`.
-
-`exp!` makes one copy to ensure that, if its output is mutated, all is well. 
-`exp_` makes two. 
 """
 exp!(A::TrackedArray) = track(exp!, A)
 exp!!(A::TrackedArray) = track(exp!!, A)
@@ -42,12 +42,13 @@ end
 
 
 """
+For `log!` it is safe to mutate both the input and the forward output,
+as the `inv_(A)` needed for the gradient is computed ahead of time.
+For `log_` it is safe to mutate the output but not its input. 
+
     log!!(A::TrackedArray)
 Note that the gradient function of `log!!` mutates its backward `Δ`.
 Even less of a good idea than `exp!!` as we must copy `inv_(A)` anyway.
-
-For `log!` and `log_` it is safe to mutate both the input and the forward output,
-as the `inv_(A)` needed for the gradient is computed ahead of time.
 """
 log!(A::TrackedArray) = track(log!, A)
 log!!(A::TrackedArray) = track(log!!, A)
@@ -59,8 +60,7 @@ log0(A::TrackedArray) = log.(A)
     log_(A.data), Δ -> ( iscale_(Δ, A.data) ,)
 @grad function log!(A::TrackedArray)
     invA = inv_(A.data)
-    logA = log!(A.data)
-    logA, Δ -> ( scale!(invA, Δ) ,)
+    log!(A.data), Δ -> ( scale!(invA, Δ) ,)
 end
 @grad function log!!(A::TrackedArray)
     invA = inv_(A.data)

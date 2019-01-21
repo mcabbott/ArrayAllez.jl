@@ -15,7 +15,7 @@ checksum(size::NTuple{N,Int}) where N = sum(ntuple(i -> size[i] * i^2, Val(N)))
 
 using LRUCache
 
-const cache = LRU{CacheKey, AbstractArray}(100) # very crude, fixed size, for now
+const cache = LRU{CacheKey, AbstractArray}(100) # very crude: fixed size, for now
 
 function Base.getindex(lru::LRU, key::CacheKey{AT}) where AT
     node = lru.ht[key]
@@ -26,7 +26,7 @@ end
 """
     similar_(name, A)     ≈ similar(A)
     Array_{T}(name, size) ≈ Array{T}(undef, size)
-New arrays for intermediate results, drawn from an LRU cache.
+New arrays for intermediate results, drawn from an LRU cache when `length(A) >= 2000`.
 The cache's key uses `name::Symbol` as well as type & size to ensure different uses don't collide.
 
     copy_(name, A) = copyto!(similar_(name, A), A)
@@ -66,7 +66,4 @@ end
 copy_(A::AbstractArray) = copy_(:copy_, A)
 
 copy_(name::Symbol, A::AbstractArray) = copyto!(similar_(name, A), A)
-
-
-
 

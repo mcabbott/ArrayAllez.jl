@@ -6,9 +6,11 @@ export log0, log_, log!, log!!
 
 """
     exp!(A)
-    exp_(A) ≈ exp!(copy(A))
+    exp_(A) = exp!(similar(A), A)
     exp0(A) ≈ exp.(A)
 Element-wise in-place exponential, and friends.
+Multi-threaded when `length(A) >= 100`.
+Will be handled by `Yeppp` or `AppleAccelerate` if you load one of them. 
 """
 function exp! end
 
@@ -21,11 +23,11 @@ exp!!(A) = exp!(A) # differs in gradient
 
 function exp!(B, A)
     @assert size(A)==size(B)
-    if length(A) < 200
+    if length(A) < 100
         B .= exp.(A)
     else
         Threads.@threads for I in eachindex(A)
-            @inbounds B[I] = exp(A[I])
+            @inbounds B[I] = exp1(A[I])
         end
     end
     B
@@ -33,9 +35,11 @@ end
 
 """
     log!(A)
-    log_(A) ≈ log!(copy(A))
+    log_(A) ≈ log!(similar(A), A)
     log0(A) = log.(A)
 Element-wise in-place natural logarithm, and friends.
+Multi-threaded when `length(A) >= 100`.
+Will be handled by `Yeppp` or `AppleAccelerate` if you load one of them.
 """
 function log! end
 
@@ -48,11 +52,11 @@ log!!(A) = log!(A) # differs in gradient
 
 function log!(B, A)
     @assert size(A)==size(B)
-    if length(A) < 200
+    if length(A) < 100
         B .= log.(A)
     else
         Threads.@threads for I in eachindex(A)
-            @inbounds B[I] = log(A[I])
+            @inbounds B[I] = log1(A[I])
         end
     end
     B
@@ -83,11 +87,14 @@ const RVector = Union{Adjoint{<:Any, <:Vector}, Transpose{<:Any, <:Vector}}
     inv!(A) ≈ 1 ./ A
     inv!(A, b::Number) ≈ b ./ A
 And `inv_(A)` which copies, and `inv0(A)` simple broadcasting.
+Multi-threaded when `length(A) >= 1000`.
+Will be handled by `AppleAccelerate` if you load it.
 """
 function inv! end
 
 inv0(A::AbstractArray, b::Number=1) = similar(A) .= b ./ A # maps Adjoint -> Adjoint etc
 
+@doc @doc(inv!)
 inv_(b::Number) = 1/b # for iscale_
 inv_(A::AbstractArray, b::Number=1) = inv!(similar(A), A, b)
 
@@ -123,6 +130,7 @@ scale_(A::Array, b::Number) = rmul!(copy(A), b)
 scale!(A::Array, b::Number) = rmul!(A, b)
 scale!!(A::Array, b) = scale!(A,b) ## differs in gradient
 
+@doc @doc(scale!)
 scale_(A::Matrix, v::Vector) = lmul!(Diagonal(v), copy(A))
 scale!(A::Matrix, v::Vector) = lmul!(Diagonal(v), A)
 
@@ -148,14 +156,15 @@ scale_(name::Symbol, A::AbstractArray, b, cdef...) = scale_(name, scale_(name, A
     iscale!(A, v::Vector) ≈ A ./ v      # A::Matrix
     iscale!(A, r::Adjoint) ≈ A ./ r     # r::RowVector / Transpose etc.
     iscale!(A, B) ≈ A ./ B
-For each of these, there is also `scale_(A, ...)` non-mutating but perhaps accellerated,
-and `scale0(A, ...)` simple broadcasting.
+For each of these, there is also `iscale_(A, ...)` non-mutating but perhaps accellerated,
+and `iscale0(A, ...)` simple broadcasting.
 Finally there is `iscale!!(A, x)` which mutate both arguments, wihch may be a terrible idea.
 """
 function iscale! end
 
 iscale0(A::AbstractArray, b) = similar(A) .= A ./ b
 
+@doc @doc(iscale!)
 iscale_(A::AbstractArray, b) = scale_(A, inv_(b))
 iscale!(A::AbstractArray, b) = scale!(A, inv_(b))
 iscale!!(A::AbstractArray, b) = scale!(A, inv!(b))
@@ -174,7 +183,7 @@ const CFloat = Union{Float64, Float32}
 const CFloatArray{N} = Array{<:CFloat, N}
 const CFloatMatrix = Matrix{<:CFloat}
 
-IVERBOSE = true
+IVERBOSE = false
 
 VEC = ""
 function load_note(str)
@@ -193,11 +202,11 @@ using Requires
 @init @require Yeppp = "6310b701-1812-5374-a82f-9f6f2d54a40a" begin
     using .Yeppp
 
-    exp_(A::CFloatArray) = Yeppp.exp(A)
-    exp!(A::CFloatArray) = Yeppp.exp!(A)
+    # exp_(A::CFloatArray) = Yeppp.exp(A)
+    exp!(B::CFloatArray, A::CFloatArray) = Yeppp.exp!(B, A)
 
-    log_(A::CFloatArray) = Yeppp.log(A)
-    log!(A::CFloatArray) = Yeppp.log!(A)
+    # log_(A::CFloatArray) = Yeppp.log(A)
+    log!(B::CFloatArray, A::CFloatArray) = Yeppp.log!(B, A)
 
     scale_(A::Array{T,N}, B::Array{T,N}) where {T<:CFloat,N} = Yeppp.multiply(A,B)
     scale!(A::Array{T,N}, B::Array{T,N}) where {T<:CFloat,N} = Yeppp.multiply!(A,A,B)
@@ -209,10 +218,10 @@ end
     using .AppleAccelerate
 
     exp_(A::CFloatArray) = AppleAccelerate.exp(A)
-    exp!(A::CFloatArray) = AppleAccelerate.exp!(A, A)
+    exp!(B::CFloatArray, A::CFloatArray) = AppleAccelerate.exp!(B, A)
 
     log_(A::CFloatArray) = AppleAccelerate.log(A)
-    log!(A::CFloatArray) = AppleAccelerate.log!(A, A)
+    log!(B::CFloatArray, A::CFloatArray) = AppleAccelerate.log!(B, A)
 
     inv_(A::CFloatArray) = AppleAccelerate.rec(A)
     inv!(A::CFloatArray) = AppleAccelerate.rec!(A, A)

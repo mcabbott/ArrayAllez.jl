@@ -42,5 +42,5 @@ const broadsum! = bsum!
 # _bsum(::Colon, ::typeof(identity), bc) = sum_(BroadcastArray(bc))
 # or not, crashes? 
 
-Base._sum(A::BroadcastArray, ::Colon) = _bsum((:), identity, A.broadcasted)
+# Base._sum(A::BroadcastArray, ::Colon) = _bsum((:), identity, A.broadcasted)
 
