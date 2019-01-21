@@ -81,7 +81,7 @@ end
 This may mutate its backward `Δ`, watch out.
 """
 scale!(A::TrackedArray, b) = track(scale!, A, b)
-scale!(A::TrackedArray, b::Number) = track(scale!, A, b) # just to avoid ambiguty with deprecation warning
+scale!(A::TrackedArray, b::Number) = track(scale!, A, b) # just to avoid ambiguty
 scale!(A::Array, b::TrackedArray) = track(scale!, A, b)
 
 scale_(A::TrackedArray, b) = track(scale_, A, b)

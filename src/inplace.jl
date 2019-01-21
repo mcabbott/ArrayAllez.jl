@@ -95,11 +95,11 @@ function inv! end
 inv0(A::AbstractArray, b::Number=1) = similar(A) .= b ./ A # maps Adjoint -> Adjoint etc
 
 @doc @doc(inv!)
-inv_(b::Number) = 1/b # for iscale_
 inv_(A::AbstractArray, b::Number=1) = inv!(similar(A), A, b)
+inv_(b::Number) = 1/b # for iscale_
 
 inv!(A::AbstractArray, b::Number=1) = inv!(A, A, 1)
-inv!(b::Number) = 1/b
+inv!(a::Number) = 1/a
 function inv!(C::AbstractArray, A::AbstractArray, b::Number=1)
     @assert size(A)==size(C)
     if length(A) < 1000
@@ -109,10 +109,11 @@ function inv!(C::AbstractArray, A::AbstractArray, b::Number=1)
             @inbounds C[I] = b / A[I]
         end
     end
-    A
+    C
 end
 
 inv_(name::Symbol, A::AbstractArray, b::Number=1) = inv!(similar_(name, A), A, b)
+inv_(name::Symbol, a::Number=1) = 1/a # for iscale_
 
 """
     scale!(A, b::Number) ≈ A .* b
@@ -126,10 +127,15 @@ function scale! end
 
 using LinearAlgebra
 
-scale0(A::AbstractArray, b) = similar(A) .= A .* b
+scale0(A::Array, b) = similar(A) .= A .* b
 scale_(A::Array, b::Number) = rmul!(copy(A), b)
 scale!(A::Array, b::Number) = rmul!(A, b)
-scale!!(A::Array, b) = scale!(A,b) ## differs in gradient
+scale!!(A::Array, b) = scale!(A,b) # differs in gradient
+
+scale0(A::RVector, b) = similar(A) .= A .* b # scale(::Abstract...) causes flux ambiguities
+scale_(A::RVector, b::Number) = rmul!(copy(A), b)
+scale!(A::RVector, b::Number) = rmul!(A, b)
+scale!!(A::RVector, b) = scale!(A,b) 
 
 @doc @doc(scale!)
 scale_(A::Matrix, v::Vector) = lmul!(Diagonal(v), copy(A))
@@ -203,13 +209,11 @@ using Requires
 @init @require Yeppp = "6310b701-1812-5374-a82f-9f6f2d54a40a" begin
     using .Yeppp
 
-    # exp_(A::CFloatArray) = Yeppp.exp(A)
     exp!(B::CFloatArray, A::CFloatArray) = Yeppp.exp!(B, A)
 
-    # log_(A::CFloatArray) = Yeppp.log(A)
     log!(B::CFloatArray, A::CFloatArray) = Yeppp.log!(B, A)
 
-    scale_(A::Array{T,N}, B::Array{T,N}) where {T<:CFloat,N} = Yeppp.multiply(A,B)
+    # scale_(A::Array{T,N}, B::Array{T,N}) where {T<:CFloat,N} = Yeppp.multiply(A,B)
     scale!(A::Array{T,N}, B::Array{T,N}) where {T<:CFloat,N} = Yeppp.multiply!(A,A,B)
 
     IVERBOSE && load_note("Yeppp")
@@ -218,28 +222,25 @@ end
 @init @require AppleAccelerate = "13e28ba4-7ad8-5781-acae-3021b1ed3924" begin
     using .AppleAccelerate
 
-    exp_(A::CFloatArray) = AppleAccelerate.exp(A)
     exp!(B::CFloatArray, A::CFloatArray) = AppleAccelerate.exp!(B, A)
 
-    log_(A::CFloatArray) = AppleAccelerate.log(A)
     log!(B::CFloatArray, A::CFloatArray) = AppleAccelerate.log!(B, A)
 
-    inv_(A::CFloatArray) = AppleAccelerate.rec(A)
     inv!(A::CFloatArray) = AppleAccelerate.rec!(A, A)
 
-    scale_(A::Vector{T}, B::Vector{T}) where {T<:CFloat} = AppleAccelerate.vmul(A,B)
+    # scale_(A::Vector{T}, B::Vector{T}) where {T<:CFloat} = AppleAccelerate.vmul(A,B)
     scale!(A::Vector{T}, B::Vector{T}) where {T<:CFloat} = AppleAccelerate.vmul!(A,A,B)
 
-    scale_(A::Array{T,N}, B::Array{T,N}) where {T<:CFloat,N} =
-        begin AppleAccelerate.vmul(vec(A),vec(B)); A end  # vmul is literally only vectors
+    # scale_(A::Array{T,N}, B::Array{T,N}) where {T<:CFloat,N} =
+        # begin AppleAccelerate.vmul(vec(A),vec(B)); A end  # vmul is literally only vectors
     scale!(A::Array{T,N}, B::Array{T,N}) where {T<:CFloat,N} =
         begin AppleAccelerate.vmul!(vec(A),vec(A),vec(B)); A end
 
-    iscale_(A::Vector{T}, B::Vector{T}) where {T<:CFloat} = AppleAccelerate.vdiv(A,B)
+    # iscale_(A::Vector{T}, B::Vector{T}) where {T<:CFloat} = AppleAccelerate.vdiv(A,B)
     iscale!(A::Vector{T}, B::Vector{T}) where {T<:CFloat} = AppleAccelerate.vdiv!(A,A,B)
 
-    iscale_(A::Array{T,N}, B::Array{T,N}) where {T<:CFloat,N} =
-        begin AppleAccelerate.vdiv(vec(A),vec(B)); A end
+    # iscale_(A::Array{T,N}, B::Array{T,N}) where {T<:CFloat,N} =
+    #     begin AppleAccelerate.vdiv(vec(A),vec(B)); A end
     iscale!(A::Array{T,N}, B::Array{T,N}) where {T<:CFloat,N} =
         begin AppleAccelerate.vdiv!(vec(A),vec(A),vec(B)); A end
 
