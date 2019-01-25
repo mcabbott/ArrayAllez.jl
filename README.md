@@ -91,6 +91,21 @@ The `broadsum!` (and `broadsum(..., dims=...)` versions now use a `BroadcastArra
 [LazyArrays.jl](https://github.com/JuliaArrays/LazyArrays.jl#broadcasting). 
 Right now that is slow for a complete `sum`, so they do something more DIY.  
 
+### `⊙`
+
+Matrix multiplication, on the last index of one tensor & the first index of the next:
+
+```julia
+three = rand(2,2,5);
+mat = rand(5,2);
+
+p1 = three ⊙ mat
+p2 = reshape(reshape(three,:,5) * mat ,2,2,2)
+
+using Einsum
+@einsum p3[i,j,k] := three[i,j,s] * mat[s,k]
+```
+
 ### See Also
 
 * [Vectorize.jl](https://github.com/rprechelt/Vectorize.jl) is a more comprehensive wrapper, including Intel MKL. 
