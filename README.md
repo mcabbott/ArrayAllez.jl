@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/mcabbott/ArrayAllez.jl.svg?branch=master)](https://travis-ci.org/mcabbott/ArrayAllez.jl)
 
 ```
-] add https://github.com/mcabbott/ArrayAllez.jl
+] add ArrayAllez
 
 add  Yeppp  Flux  https://github.com/platawiec/AppleAccelerate.jl#julia07
 ```
@@ -91,7 +91,7 @@ The `broadsum!` (and `broadsum(..., dims=...)` versions now use a `BroadcastArra
 [LazyArrays.jl](https://github.com/JuliaArrays/LazyArrays.jl#broadcasting). 
 Right now that is slow for a complete `sum`, so they do something more DIY.  
 
-### `⊙`
+### `⊙ = \odot`
 
 Matrix multiplication, on the last index of one tensor & the first index of the next:
 
@@ -100,10 +100,11 @@ three = rand(2,2,5);
 mat = rand(5,2);
 
 p1 = three ⊙ mat
-p2 = reshape(reshape(three,:,5) * mat ,2,2,2)
+
+p2 = reshape(reshape(three,:,5) * mat ,2,2,2) # same
 
 using Einsum
-@einsum p3[i,j,k] := three[i,j,s] * mat[s,k]
+@einsum p3[i,j,k] := three[i,j,s] * mat[s,k]  # same
 ```
 
 ### See Also
