@@ -66,19 +66,19 @@ end
 
 @testset "odot" begin
 
-	c = rand(3)
-	cc = rand(3,3)
+    c = rand(3)
+    cc = rand(3,3)
 
-	@test cc ⊙ c == cc * c
-	@test cc ⊙ cc == cc * cc
-	@test c' ⊙ cc == c' * cc
+    @test cc ⊙ c == cc * c
+    @test cc ⊙ cc == cc * cc
+    @test c' ⊙ cc == c' * cc
 
-	ccc = rand(3,3,3)
-	Ic = reshape(ccc,9,3)
-	cI = reshape(ccc,3,9)
+    ccc = rand(3,3,3)
+    Ic = reshape(ccc,9,3)
+    cI = reshape(ccc,3,9)
 
-	@test vec(ccc ⊙ ccc) == vec(Ic * cI)
-	@test vec(ccc ↓ ccc) == vec(Ic * cI)
+    @test vec(ccc ⊙ ccc) == vec(Ic * cI)
+    @test vec(ccc ↓ ccc) == vec(Ic * cI)
 
 end
 
