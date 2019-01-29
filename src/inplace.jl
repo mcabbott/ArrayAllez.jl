@@ -1,16 +1,19 @@
 
-#========== exp! and log! ==========#
+#========== exp! log! inv! ==========#
 
 export exp0, exp_, exp!, exp!!
 export log0, log_, log!, log!!
+export inv0, inv_, inv!, inv!!
 
 """
     exp!(A)
     exp_(A) = exp!(similar(A), A)
     exp0(A) ≈ exp.(A)
+
 Element-wise in-place exponential, and friends.
 Multi-threaded when `length(A) >= 100`.
-Will be handled by `Yeppp` or `AppleAccelerate` if you load one of them. 
+Will be handled by `Yeppp` or `AppleAccelerate` if you load one of them,
+note that `Yeppp` may well be slower. 
 """
 function exp! end
 
@@ -37,6 +40,7 @@ end
     log!(A)
     log_(A) ≈ log!(similar(A), A)
     log0(A) = log.(A)
+
 Element-wise in-place natural logarithm, and friends.
 Multi-threaded when `length(A) >= 100`.
 Will be handled by `Yeppp` or `AppleAccelerate` if you load one of them.
@@ -72,20 +76,10 @@ log1(x) = log(x)
 exp_(name::Symbol, A) = exp!(similar_(name, A), A)
 log_(name::Symbol, A) = log!(similar_(name, A), A)
 
-#========== inv! and scale! ==========#
-
-export inv0, inv_, inv!, inv!!
-export scale0, scale_, scale!, scale!!
-export iscale0, iscale_, iscale!, iscale!!
-
-using LinearAlgebra: Adjoint, Transpose
-
-const ARVector = Union{Adjoint{<:Any, <:AbstractVector}, Transpose{<:Any, <:AbstractVector}}
-const RVector = Union{Adjoint{<:Any, <:Vector}, Transpose{<:Any, <:Vector}}
-
 """
     inv!(A) ≈ 1 ./ A
     inv!(A, b::Number) ≈ b ./ A
+
 And `inv_(A)` which copies, and `inv0(A)` simple broadcasting.
 Multi-threaded when `length(A) >= 1000`.
 Will be handled by `AppleAccelerate` if you load it.
@@ -96,7 +90,7 @@ inv0(A::AbstractArray, b::Number=1) = similar(A) .= b ./ A # maps Adjoint -> Adj
 
 @doc @doc(inv!)
 inv_(A::AbstractArray, b::Number=1) = inv!(similar(A), A, b)
-inv_(b::Number) = 1/b # for iscale_
+inv_(a::Number) = 1/a # for iscale_
 
 inv!(A::AbstractArray, b::Number=1) = inv!(A, A, 1)
 inv!(a::Number) = 1/a
@@ -115,11 +109,25 @@ end
 inv_(name::Symbol, A::AbstractArray, b::Number=1) = inv!(similar_(name, A), A, b)
 inv_(name::Symbol, a::Number=1) = 1/a # for iscale_
 
+
+#========== scale! iscale! ==========#
+
+export scale0, scale_, scale!, scale!!
+export iscale0, iscale_, iscale!, iscale!!
+
+using LinearAlgebra: Adjoint, Transpose
+
+const ARVector = Union{Adjoint{<:Any, <:AbstractVector}, Transpose{<:Any, <:AbstractVector}}
+const RVector = Union{Adjoint{<:Any, <:Vector}, Transpose{<:Any, <:Vector}}
+
+
 """
     scale!(A, b::Number) ≈ A .* b
-    scale!(A, v::Vector) ≈ A .* v       # A::Matrix
-    scale!(A, r::Adjoint) ≈ A .* r      # r::RowVector / Transpose etc.
-    scale!(A, B) ≈ A .* B
+    scale!(M, v::Vector) ≈ A .* v       # M::Matrix
+    scale!(M, r::Adjoint) ≈ A .* r      # r::RowVector / Transpose etc.
+    scale!(A, B) ≈ A .* B               # A,B same ndims
+
+In-place scaling by a constant or (in the case of a matrix) by a row- or column-vector.  
 For each of these, there is also also `scale_(A, ...)` non-mutating but perhaps accellerated,
 and `scale0(A, ...)` simple broadcasting.
 """
@@ -127,13 +135,13 @@ function scale! end
 
 using LinearAlgebra
 
-scale0(A::Array, b) = similar(A) .= A .* b
+scale0(A::AbstractArray, b) = similar(A) .= A .* b
+
 scale_(A::Array, b::Number) = rmul!(copy(A), b)
 scale!(A::Array, b::Number) = rmul!(A, b)
 scale!!(A::Array, b) = scale!(A,b) # differs in gradient
 
-scale0(A::RVector, b) = similar(A) .= A .* b # scale(::Abstract...) causes flux ambiguities
-scale_(A::RVector, b::Number) = rmul!(copy(A), b)
+scale_(A::RVector, b::Number) = rmul!(copy(A), b) # scale_(::Abstract...) causes flux ambiguities
 scale!(A::RVector, b::Number) = rmul!(A, b)
 scale!!(A::RVector, b) = scale!(A,b) 
 
@@ -163,6 +171,7 @@ scale_(name::Symbol, A::AbstractArray, b, cdef...) = scale_(name, scale_(name, A
     iscale!(A, v::Vector) ≈ A ./ v      # A::Matrix
     iscale!(A, r::Adjoint) ≈ A ./ r     # r::RowVector / Transpose etc.
     iscale!(A, B) ≈ A ./ B
+
 For each of these, there is also `iscale_(A, ...)` non-mutating but perhaps accellerated,
 and `iscale0(A, ...)` simple broadcasting.
 Finally there is `iscale!!(A, x)` which mutate both arguments, wihch may be a terrible idea.
@@ -211,9 +220,9 @@ using Requires
 
     exp!(B::CFloatArray, A::CFloatArray) = Yeppp.exp!(B, A)
 
-    log!(B::CFloatArray, A::CFloatArray) = Yeppp.log!(B, A)
-
-    # scale_(A::Array{T,N}, B::Array{T,N}) where {T<:CFloat,N} = Yeppp.multiply(A,B)
+    log!(B::CFloatArray, A::CFloatArray) = Yeppp.log!(B, A) # log_(A) calls log!(B,A),
+                                                            # but not true for scale_
+    scale_(A::Array{T,N}, B::Array{T,N}) where {T<:CFloat,N} = Yeppp.multiply(A,B)
     scale!(A::Array{T,N}, B::Array{T,N}) where {T<:CFloat,N} = Yeppp.multiply!(A,A,B)
 
     IVERBOSE && load_note("Yeppp")
@@ -228,19 +237,19 @@ end
 
     inv!(A::CFloatArray) = AppleAccelerate.rec!(A, A)
 
-    # scale_(A::Vector{T}, B::Vector{T}) where {T<:CFloat} = AppleAccelerate.vmul(A,B)
+    scale_(A::Vector{T}, B::Vector{T}) where {T<:CFloat} = AppleAccelerate.vmul(A,B)
     scale!(A::Vector{T}, B::Vector{T}) where {T<:CFloat} = AppleAccelerate.vmul!(A,A,B)
 
-    # scale_(A::Array{T,N}, B::Array{T,N}) where {T<:CFloat,N} =
-        # begin AppleAccelerate.vmul(vec(A),vec(B)); A end  # vmul is literally only vectors
+    scale_(A::Array{T,N}, B::Array{T,N}) where {T<:CFloat,N} =
+        begin AppleAccelerate.vmul(vec(A),vec(B)); A end  # vmul is literally only vectors
     scale!(A::Array{T,N}, B::Array{T,N}) where {T<:CFloat,N} =
         begin AppleAccelerate.vmul!(vec(A),vec(A),vec(B)); A end
 
-    # iscale_(A::Vector{T}, B::Vector{T}) where {T<:CFloat} = AppleAccelerate.vdiv(A,B)
+    iscale_(A::Vector{T}, B::Vector{T}) where {T<:CFloat} = AppleAccelerate.vdiv(A,B)
     iscale!(A::Vector{T}, B::Vector{T}) where {T<:CFloat} = AppleAccelerate.vdiv!(A,A,B)
 
-    # iscale_(A::Array{T,N}, B::Array{T,N}) where {T<:CFloat,N} =
-    #     begin AppleAccelerate.vdiv(vec(A),vec(B)); A end
+    iscale_(A::Array{T,N}, B::Array{T,N}) where {T<:CFloat,N} =
+        begin AppleAccelerate.vdiv(vec(A),vec(B)); A end
     iscale!(A::Array{T,N}, B::Array{T,N}) where {T<:CFloat,N} =
         begin AppleAccelerate.vdiv!(vec(A),vec(A),vec(B)); A end
 
