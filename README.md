@@ -5,7 +5,7 @@
 ```
 ] add ArrayAllez
 
-add  Yeppp  Flux  https://github.com/platawiec/AppleAccelerate.jl#julia07
+add  Yeppp  Flux  AppleAccelerate
 ```
 
 ### `log! ∘ exp!`
@@ -74,22 +74,8 @@ inv_(:inv, x) # most of the _ functions can opt-in
 
 ### `broadsum`
 
-An attempt to keep broadcasting un-`materialize`d: 
-
-```julia
-v = rand(10^4);
-w = similar(v);
-
-sum(v .* v')  # @btime 400 ms, 760 MB
-broadsum(*, v, v')  # 7 ms, 112 bytes
-
-sum!(w, v .* v');        # 760 MB
-broadsum!(w, *, v, v');  # 96 bytes
-```
-
-The `broadsum!` (and `broadsum(..., dims=...)` versions now use a `BroadcastArray` from 
-[LazyArrays.jl](https://github.com/JuliaArrays/LazyArrays.jl#broadcasting). 
-Right now that is slow for a complete `sum`, so they do something more DIY.  
+This was an attempt to keep broadcasting un-`materialize`d, 
+now done better by [LazyArrays.jl](https://github.com/JuliaArrays/LazyArrays.jl#broadcasting). 
 
 ### `⊙ = \odot`
 
