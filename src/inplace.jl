@@ -13,7 +13,7 @@ export inv0, inv_, inv!, inv!!
 Element-wise in-place exponential, and friends.
 Multi-threaded when `length(A) >= 100`.
 Will be handled by `Yeppp` or `AppleAccelerate` if you load one of them,
-note that `Yeppp` may well be slower. 
+note that `Yeppp` may well be slower.
 """
 function exp! end
 
@@ -127,7 +127,7 @@ const RVector = Union{Adjoint{<:Any, <:Vector}, Transpose{<:Any, <:Vector}}
     scale!(M, r::Adjoint) ≈ A .* r      # r::RowVector / Transpose etc.
     scale!(A, B) ≈ A .* B               # A,B same ndims
 
-In-place scaling by a constant or (in the case of a matrix) by a row- or column-vector.  
+In-place scaling by a constant or (in the case of a matrix) by a row- or column-vector.
 For each of these, there is also also `scale_(A, ...)` non-mutating but perhaps accellerated,
 and `scale0(A, ...)` simple broadcasting.
 """
@@ -143,7 +143,7 @@ scale!!(A::Array, b) = scale!(A,b) # differs in gradient
 
 scale_(A::RVector, b::Number) = rmul!(copy(A), b) # scale_(::Abstract...) causes flux ambiguities
 scale!(A::RVector, b::Number) = rmul!(A, b)
-scale!!(A::RVector, b) = scale!(A,b) 
+scale!!(A::RVector, b) = scale!(A,b)
 
 @doc @doc(scale!)
 scale_(A::Matrix, v::Vector) = lmul!(Diagonal(v), copy(A))
@@ -152,18 +152,25 @@ scale!(A::Matrix, v::Vector) = lmul!(Diagonal(v), A)
 scale_(A::Matrix, r::RVector) = rmul!(copy(A), Diagonal(transpose(r)))
 scale!(A::Matrix, r::RVector) = rmul!(A, Diagonal(transpose(r)))
 
-scale_(A::AbstractArray{T,N}, B::AbstractArray{T,N}) where {T,N} = similar(A) .= A .* B
-scale!(A::AbstractArray{T,N}, B::AbstractArray{T,N}) where {T,N} = A .= A .* B
+# scale_(A::AbstractArray{T,N}, B::AbstractArray{T,N}) where {T,N} = similar(A) .= A .* B
+# scale!(A::AbstractArray{T,N}, B::AbstractArray{T,N}) where {T,N} = A .= A .* B
 
-# scale0(A::AbstractArray, b, cdef...) = Broadcast.broadcast(*,A, b, cdef...)
-# scale_(A::AbstractArray, b, cdef...) = scale_(scale_(A, b), cdef...)
-# scale!(A::AbstractArray, b, cdef...) = scale!(scale!(A, b), cdef...)
+function scale!(C::AbstractArray{T,N}, A::AbstractArray{TA,N}, B::AbstractArray{TB,N}) where {T,N, TA, TB}
+    @assert size(A) == size(B) == size(C)
+    for i in eachindex(A)
+        @inbounds C[i] = A[i] * B[i]
+    end
+    C
+end
+scale_(A::AbstractArray{T,N}, B::AbstractArray{T,N}) where {T,N} = scale!(similar(A), A, B)
+scale!(A::AbstractArray{T,N}, B::AbstractArray{T,N}) where {T,N} = scale!(A, A, B)
+
 
 scale_(name::Symbol, A::Array, b::Number) = rmul!(copy_(name, A), b)
 scale_(name::Symbol, A::Matrix, v::Vector) = lmul!(Diagonal(v), copy_(name, A))
 scale_(name::Symbol, A::Matrix, r::RVector) = rmul!(copy_(name, A), Diagonal(transpose(r)))
-scale_(name::Symbol, A::AbstractArray{T,N}, B::AbstractArray{T,N}) where {T,N} = similar_(name, A) .= A .* B
-scale_(name::Symbol, A::AbstractArray, b, cdef...) = scale_(name, scale_(name, A, b), cdef...)
+scale_(name::Symbol, A::AbstractArray{T,N}, B::AbstractArray{T,N}) where {T,N} =
+    scale!(similar_(name, A), A, B)
 
 
 """
@@ -185,7 +192,36 @@ iscale_(A::AbstractArray, b) = scale_(A, inv_(b))
 iscale!(A::AbstractArray, b) = scale!(A, inv_(b))
 iscale!!(A::AbstractArray, b) = scale!(A, inv!(b))
 
+function iscale!(C::Array{T,N}, A::Array{TA,N}, B::Array{TB,N}) where {T,N, TA, TB}
+    @assert size(A) == size(B) == size(C)
+    for i in eachindex(A)
+        @inbounds C[i] = A[i] / B[i]
+    end
+    C
+end
+iscale_(A::Array{T,N}, B::Array{T,N}) where {T,N} = iscale!(similar(A), A, B)
+iscale!(A::Array{T,N}, B::Array{T,N}) where {T,N} = iscale!(A, A, B)
+
+# On square matrices this is a tie, but on (n,N) ./ N' it is faster
+# The equivalent for iscale(Matrix, Vector) however is slower, wrong order
+function iscale!(C::Matrix, A::Matrix, r::RVector)
+    @assert size(A)==size(C)
+    axes(A,2) == axes(r,2) || throw(DimensionMismatch("size disagreement in iscale?(Matrix,RowVector)"))
+    @inbounds for j in axes(A,2)
+        invr = inv(r[j])
+        for i in axes(A,1)
+            C[i,j] = A[i,j] * invr
+        end
+    end
+    C
+end
+iscale_(A::Matrix, r::RVector) = iscale!(similar(A), A, r)
+iscale!(A::Matrix, r::RVector) = iscale!(A, A, r)
+
 iscale_(name::Symbol, A::AbstractArray, b) = scale_(name, A, inv_(name, b))
+iscale_(name::Symbol, A::Matrix, r::RVector) = iscale!(similar_(name, A), A, r)
+iscale_(name::Symbol, A::Array{T,N}, B::Array{T,N}) where {T,N} =
+    iscale!(similar_(name, A), A, B)
 
 #========== sum_ ==========#
 
@@ -220,8 +256,8 @@ using Requires
 
     exp!(B::CFloatArray, A::CFloatArray) = Yeppp.exp!(B, A)
 
-    log!(B::CFloatArray, A::CFloatArray) = Yeppp.log!(B, A) # log_(A) calls log!(B,A),
-                                                            # but not true for scale_
+    log!(B::CFloatArray, A::CFloatArray) = Yeppp.log!(B, A) # log_(A) calls log!(B,A)
+
     scale_(A::Array{T,N}, B::Array{T,N}) where {T<:CFloat,N} = Yeppp.multiply(A,B)
     scale!(A::Array{T,N}, B::Array{T,N}) where {T<:CFloat,N} = Yeppp.multiply!(A,A,B)
 
@@ -241,7 +277,7 @@ end
     scale!(A::Vector{T}, B::Vector{T}) where {T<:CFloat} = AppleAccelerate.vmul!(A,A,B)
 
     scale_(A::Array{T,N}, B::Array{T,N}) where {T<:CFloat,N} =
-        begin AppleAccelerate.vmul(vec(A),vec(B)); A end  # vmul is literally only vectors
+        reshape(AppleAccelerate.vmul(vec(A),vec(B)), size(A))  # vmul is literally only vectors
     scale!(A::Array{T,N}, B::Array{T,N}) where {T<:CFloat,N} =
         begin AppleAccelerate.vmul!(vec(A),vec(A),vec(B)); A end
 
@@ -249,7 +285,7 @@ end
     iscale!(A::Vector{T}, B::Vector{T}) where {T<:CFloat} = AppleAccelerate.vdiv!(A,A,B)
 
     iscale_(A::Array{T,N}, B::Array{T,N}) where {T<:CFloat,N} =
-        begin AppleAccelerate.vdiv(vec(A),vec(B)); A end
+        reshape(AppleAccelerate.vdiv(vec(A),vec(B)), size(A))
     iscale!(A::Array{T,N}, B::Array{T,N}) where {T<:CFloat,N} =
         begin AppleAccelerate.vdiv!(vec(A),vec(A),vec(B)); A end
 
