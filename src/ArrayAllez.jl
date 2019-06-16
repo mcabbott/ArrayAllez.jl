@@ -6,7 +6,7 @@ include("inplace.jl")
 
 include("odot.jl")
 
-@init @require Flux = "587475ba-b771-5e3f-ad9e-33799f191a9c" begin
+@init @require Tracker = "9f7883ad-71c0-57eb-9f7f-b5c9e6d3789c" begin
 	include("inplace-flux.jl")
 	include("prod+cumprod.jl")
 end

@@ -1,14 +1,14 @@
-IVERBOSE && @info "ArrayAllez loaded in-place code for Flux"
+IVERBOSE && @info "ArrayAllez loaded in-place code for Tracker"
 
-using .Flux
-using .Flux.Tracker: track, TrackedArray, TrackedReal, @grad, data, nobacksies # also for prod....jl
+using .Tracker
+using .Tracker: track, TrackedArray, TrackedReal, @grad, data, nobacksies # also for prod....jl
 
 """
-It is safe to mutate the forward output of `exp!` and `exp_`, 
-as they keep a copy for backwards use. 
+It is safe to mutate the forward output of `exp!` and `exp_`,
+as they keep a copy for backwards use.
 
     exp!!(A::TrackedArray)
-The gradient function of `exp!!` mutates its backward `Δ`, no copies. 
+The gradient function of `exp!!` mutates its backward `Δ`, no copies.
 Whether or not this is safe is for you to decide.
 It tends to lead to Inf problems when used inside `@btime`.
 """
@@ -44,7 +44,7 @@ end
 """
 For `log!` it is safe to mutate both the input and the forward output,
 as the `inv_(A)` needed for the gradient is computed ahead of time.
-For `log_` it is safe to mutate the output but not its input. 
+For `log_` it is safe to mutate the output but not its input.
 
     log!!(A::TrackedArray)
 Note that the gradient function of `log!!` mutates its backward `Δ`.
@@ -93,7 +93,7 @@ scale0(A::TrackedArray, b) = A .* b
 @grad scale!!(A::TrackedArray, b::Number) = scale!(A.data, b), Δ -> (scale!(Δ, b), nothing)
 
 # @grad scale_(A::TrackedArray, b::TrackedReal) = scale_(A.data, b), Δ -> (scale_(Δ, b), dot(A,Δ))
-# @grad scale!(A::TrackedArray, b::TrackedReal) = @error "hmm" 
+# @grad scale!(A::TrackedArray, b::TrackedReal) = @error "hmm"
 
 @grad scale_(A::TrackedArray, B::Union{Array, RVector}) = scale_(A.data, B), Δ -> (scale_(Δ, B), nothing)
 @grad scale!(A::TrackedArray, B::Union{Array, RVector}) = scale!(A.data, B), Δ -> (scale_(Δ, B), nothing)
@@ -156,7 +156,7 @@ inv0(A::TrackedArray, b) = 1 ./ A
 # @grad inv!(A::TrackedArray, b::Number=1) = inv_(A.data, b), Δ -> (-1 .* Δ .* b .* A.data .^ (-2) , nothing) # one copy
 @grad function inv_(A::TrackedArray, b=1)
     invA = inv_(A.data, b)
-    invA_copy = copy(invA) # don't invert twice? 
+    invA_copy = copy(invA) # don't invert twice?
     invA, Δ -> (invA_copy .= -1 .* Δ .* b .* invA_copy .^ 2 , nothing) # total one copy
 end
 # @grad inv!(A::TrackedArray, b::Number=1) = inv!(A.data, b), Δ -> (-1 .* Δ .* b .* A.data .^ 2 , nothing) # one copy
