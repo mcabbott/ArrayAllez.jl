@@ -3,9 +3,12 @@ using Test
 
 @static if Sys.isapple()
     using AppleAccelerate
-    @info "testing with AppleAccelerate"
+    @info "testing with AppleAccelerate (always done on Apple machines)"
+elseif rand() > 0.5
+    using Yeppp
+    @info "testing with Yeppp (this happens half the time on non-Apple machines)"
 else
-    @info "testing without AppleAccelerate"
+    @info "testing without Yeppp (because of a coin flip) nor AppleAccelerate (unavailable)"
 end
 
 @testset "simple" begin
