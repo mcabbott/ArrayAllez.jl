@@ -15,13 +15,13 @@ checksum(size::NTuple{N,Int}) where N = sum(ntuple(i -> size[i] * i^2, Val(N)))
 
 using LRUCache
 
-const cache = LRU{CacheKey, AbstractArray}(100) # very crude: fixed size, for now
+const cache = LRU{CacheKey, AbstractArray}(;maxsize = 100) # very crude: fixed size, for now
 
-function Base.getindex(lru::LRU, key::CacheKey{AT}) where AT
-    node = lru.ht[key]
-    LRUCache.move_to_front!(lru.q, node)
-    return node.v::AT # to improve type stability?
-end
+# function Base.getindex(lru::LRU, key::CacheKey{AT}) where AT
+#     node = lru.ht[key]
+#     LRUCache.move_to_front!(lru.q, node)
+#     return node.v::AT # to improve type stability?
+# end
 
 """
     similar_(name, A)     ≈ similar(A)
@@ -38,7 +38,9 @@ function similar_(name::Symbol, A::TA)::TA where TA<:AbstractArray
     if length(A) < 2000
         similar(A)
     else
-        @get! cache CacheKey(name, A) similar(A)
+        get(cache, CacheKey(name, A)) do
+            similar(A)
+        end
     end
 end
 
@@ -58,7 +60,9 @@ function Array_{T}(name::Symbol, sz::NTuple{N,Int}) where {T,N}
     if prod(sz) < 2000
         Array{T}(undef, sz);
     else
-        @get! cache key Array{T, N}(undef, sz)
+        get(cache, key) do
+            Array{T, N}(undef, sz)
+        end
     end
 end
 
