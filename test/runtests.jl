@@ -3,6 +3,9 @@ using Test
 
 @static if Sys.isapple()
     using AppleAccelerate
+    @into "testing with AppleAccelerate"
+else
+    @into "testing without AppleAccelerate"
 end
 
 @testset "simple" begin
