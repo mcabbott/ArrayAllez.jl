@@ -1,7 +1,7 @@
 name = "ArrayAllez"
 uuid = "42ed035d-9ad9-5097-b4a3-321d9b0dde85"
 license = "MIT"
-version = "0.0.5"
+version = "0.0.4"
 
 [deps]
 FillArrays = "1a297f60-69ca-5386-bcde-b61e274b549b"
