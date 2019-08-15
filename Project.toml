@@ -9,6 +9,7 @@ LRUCache = "8ac3fa9e-de4c-5943-b1dc-09c6b5f20637"
 LazyArrays = "5078a376-72f3-5289-bfd5-ec5146d43c02"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Requires = "ae029012-a4dd-5104-9daa-d747884805df"
+ZygoteRules = "700de1a5-db45-46bc-99cf-38207098b444"
 
 [compat]
 julia = "1"

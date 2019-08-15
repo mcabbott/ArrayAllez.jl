@@ -10,9 +10,9 @@ include("odot.jl")
 	include("inplace-flux.jl")
 	include("prod+cumprod.jl")
 end
-@init @require Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f" begin
+# @init @require Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f" begin
     include("inplace-zygote.jl")
-end
+# end
 
 
 end

@@ -1,7 +1,6 @@
-IVERBOSE && @info "ArrayAllez loaded in-place code for Zygote"
 
-using .Zygote
-using .Zygote: @adjoint
+using ZygoteRules
+using ZygoteRules: @adjoint
 
 # From the flux file, this one replaces
 # @grad -> @adjoint
