@@ -92,6 +92,19 @@ end
 
 end
 
+@testset "dropdims" begin
+
+    @dropdims begin
+        a = sum(ones(3,7), dims=2)
+        b = sum(10 .* randn(2,10); dims=2) do x
+            trunc(Int, x)
+        end
+    end
+    @test a isa Vector
+    @test b isa Vector
+
+end
+
 using Tracker
 using Tracker: TrackedArray, gradcheck, back!, data, grad
 

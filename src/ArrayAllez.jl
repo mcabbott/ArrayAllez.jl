@@ -14,5 +14,6 @@ end
     include("inplace-zygote.jl")
 # end
 
+include("dropdims.jl")
 
 end

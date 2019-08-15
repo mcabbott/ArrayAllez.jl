@@ -93,6 +93,17 @@ using Einsum
 @einsum p3[i,j,k] := three[i,j,s] * mat[s,k]  # same
 ```
 
+### `@dropdims`
+
+This macro wraps reductions like `sum(A; dims=...)` in `dropdims()`.
+It understands things like this:
+
+```julia
+@dropdims sum(10 .* randn(2,10); dims=2) do x
+    trunc(Int, x)
+end
+```
+
 ### See Also
 
 * [Vectorize.jl](https://github.com/rprechelt/Vectorize.jl) is a more comprehensive wrapper, including Intel MKL. 
