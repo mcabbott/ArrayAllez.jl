@@ -292,4 +292,17 @@ end
     IVERBOSE && load_note("AppleAccelerate")
 end
 
+@init @require VML = "c8ce9da6-5d36-5c03-b118-5a70151be7bc" begin
+    using .VML
+
+    exp!(B::CFloatArray, A::CFloatArray) = VML.exp!(B, A)
+
+    log!(B::CFloatArray, A::CFloatArray) = VML.log!(B, A) # log_(A) calls log!(B,A)
+
+    iscale_(A::Array{T,N}, B::Array{T,N}) where {T<:CFloat,N} = VML.divide(A,B)
+    iscale!(A::Array{T,N}, B::Array{T,N}) where {T<:CFloat,N} = VML.divide!(A,A,B)
+
+    IVERBOSE && load_note("VML")
+end
+
 #========== The End ==========#
