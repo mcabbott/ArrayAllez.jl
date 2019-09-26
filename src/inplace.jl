@@ -292,6 +292,9 @@ end
     IVERBOSE && load_note("AppleAccelerate")
 end
 
+#=
+# waiting for https://github.com/JuliaMath/VML.jl/pull/17
+
 @init @require VML = "c8ce9da6-5d36-5c03-b118-5a70151be7bc" begin
     using .VML
 
@@ -304,5 +307,6 @@ end
 
     IVERBOSE && load_note("VML")
 end
+=#
 
 #========== The End ==========#
