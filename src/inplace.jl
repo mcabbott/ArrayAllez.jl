@@ -223,11 +223,6 @@ iscale_(name::Symbol, A::Matrix, r::RVector) = iscale!(similar_(name, A), A, r)
 iscale_(name::Symbol, A::Array{T,N}, B::Array{T,N}) where {T,N} =
     iscale!(similar_(name, A), A, B)
 
-#========== sum_ ==========#
-
-export sum_
-
-sum_(A::AbstractArray) = sum(A) # differs only in backward pass
 
 #========== Accelerators ==========#
 

@@ -167,15 +167,3 @@ end
 end
 @grad inv!!(A::TrackedArray, b::Number=1) = inv!(A.data, b), Δ -> (scale!(Δ,A,A,-b), nothing)
 
-
-using FillArrays
-"""
-    sum_(A)
-Like `sum(A)`, but with a `FilledArray.Ones` when going backwards.
-"""
-sum_(A::TrackedArray) = track(sum_, A)
-
-@grad function sum_(A::TrackedArray)
-    sum(A.data), Δ -> (Ones(A.data) ,)
-end
-
