@@ -1,4 +1,12 @@
 
+if VERSION <= v"1.1"
+    const TH_EXP = 100
+    const TH_INV = 1000
+else
+    const TH_EXP = 5000
+    const TH_INV = 100_000
+end
+
 #========== exp! log! inv! ==========#
 
 export exp0, exp_, exp!, exp!!
@@ -11,8 +19,8 @@ export inv0, inv_, inv!, inv!!
     exp0(A) ≈ exp.(A)
 
 Element-wise in-place exponential, and friends.
-Multi-threaded when `length(A) >= 100`.
-Will be handled by `Yeppp` or `AppleAccelerate` if you load one of them,
+Multi-threaded when `length(A) >= $TH_EXP`.
+Will be handled by `Yeppp` or `AppleAccelerate` or `VML` if you load one of them,
 note that `Yeppp` may well be slower.
 """
 function exp! end
@@ -26,8 +34,10 @@ exp!!(A) = exp!(A) # differs in gradient
 
 function exp!(B, A)
     @assert size(A)==size(B)
-    if length(A) < 100
-        B .= exp.(A)
+    if length(A) < TH_EXP
+        for I in eachindex(A)
+            @inbounds B[I] = exp1(A[I])
+        end
     else
         Threads.@threads for I in eachindex(A)
             @inbounds B[I] = exp1(A[I])
@@ -42,8 +52,8 @@ end
     log0(A) = log.(A)
 
 Element-wise in-place natural logarithm, and friends.
-Multi-threaded when `length(A) >= 100`.
-Will be handled by `Yeppp` or `AppleAccelerate` if you load one of them.
+Multi-threaded when `length(A) >= $TH_EXP`.
+Will be handled by `Yeppp` or `AppleAccelerate` or `VML` if you load one of them.
 """
 function log! end
 
@@ -56,8 +66,10 @@ log!!(A) = log!(A) # differs in gradient
 
 function log!(B, A)
     @assert size(A)==size(B)
-    if length(A) < 100
-        B .= log.(A)
+    if length(A) < TH_EXP
+        for I in eachindex(A)
+            @inbounds B[I] = log1(A[I])
+        end
     else
         Threads.@threads for I in eachindex(A)
             @inbounds B[I] = log1(A[I])
@@ -81,7 +93,7 @@ log_(name::Symbol, A) = log!(similar_(name, A), A)
     inv!(A, b::Number) ≈ b ./ A
 
 And `inv_(A)` which copies, and `inv0(A)` simple broadcasting.
-Multi-threaded when `length(A) >= 1000`.
+Multi-threaded when `length(A) >= $TH_INV`.
 Will be handled by `AppleAccelerate` if you load it.
 """
 function inv! end
@@ -96,8 +108,10 @@ inv!(A::AbstractArray, b::Number=1) = inv!(A, A, 1)
 inv!(a::Number) = 1/a
 function inv!(C::AbstractArray, A::AbstractArray, b::Number=1)
     @assert size(A)==size(C)
-    if length(A) < 1000
-        C .= b ./ A
+    if length(A) < TH_INV
+        for I in eachindex(A)
+            @inbounds C[I] = b / A[I]
+        end
     else
         Threads.@threads for I in eachindex(A)
             @inbounds C[I] = b / A[I]
