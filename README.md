@@ -11,8 +11,10 @@ add  Yeppp  AppleAccelerate  IntelVectorMath
 ### `log! ∘ exp!`
 
 This began as a way to more conveniently choose between [Yeppp!](https://github.com/JuliaMath/Yeppp.jl) 
-and [AppleAccelerate](https://github.com/JuliaMath/AppleAccelerate.jl) and [IntelVectorMath](https://github.com/JuliaMath/IntelVectorMath.jl).
-Or none of these... just loops with `@threads`?
+and [AppleAccelerate](https://github.com/JuliaMath/AppleAccelerate.jl)
+and [IntelVectorMath](https://github.com/JuliaMath/IntelVectorMath.jl),
+without requiring that any by installed. 
+The fallback version is just a loop, with `@threads` for large enough arrays.
 
 ```julia
 x = rand(1,100);
@@ -114,3 +116,4 @@ end
 
 * [Strided.jl](https://github.com/Jutho/Strided.jl) adds `@threads` to broadcasting. 
 
+* [LoopVectorization.jl](https://github.com/chriselrod/LoopVectorization.jl) adds AVX black magic.
