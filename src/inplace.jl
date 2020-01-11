@@ -20,7 +20,7 @@ export inv0, inv_, inv!, inv!!
 
 Element-wise in-place exponential, and friends.
 Multi-threaded when `length(A) >= $TH_EXP`.
-Will be handled by `Yeppp` or `AppleAccelerate` or `VML` if you load one of them,
+Will be handled by `Yeppp` or `AppleAccelerate` or `IntelVectorMath` if you load one of them,
 note that `Yeppp` may well be slower.
 """
 function exp! end
@@ -53,7 +53,7 @@ end
 
 Element-wise in-place natural logarithm, and friends.
 Multi-threaded when `length(A) >= $TH_EXP`.
-Will be handled by `Yeppp` or `AppleAccelerate` or `VML` if you load one of them.
+Will be handled by `Yeppp` or `AppleAccelerate` or `IntelVectorMath` if you load one of them.
 """
 function log! end
 
@@ -301,21 +301,17 @@ end
     IVERBOSE && load_note("AppleAccelerate")
 end
 
-#=
-# waiting for https://github.com/JuliaMath/VML.jl/pull/17
+@init @require IntelVectorMath = "c8ce9da6-5d36-5c03-b118-5a70151be7bc" begin
+    using .IntelVectorMath
 
-@init @require VML = "c8ce9da6-5d36-5c03-b118-5a70151be7bc" begin
-    using .VML
+    exp!(B::CFloatArray, A::CFloatArray) = IVM.exp!(B, A)
 
-    exp!(B::CFloatArray, A::CFloatArray) = VML.exp!(B, A)
+    log!(B::CFloatArray, A::CFloatArray) = IVM.log!(B, A) # log_(A) calls log!(B,A)
 
-    log!(B::CFloatArray, A::CFloatArray) = VML.log!(B, A) # log_(A) calls log!(B,A)
+    iscale_(A::Array{T,N}, B::Array{T,N}) where {T<:CFloat,N} = IVM.divide(A,B)
+    iscale!(A::Array{T,N}, B::Array{T,N}) where {T<:CFloat,N} = IVM.divide!(A,A,B)
 
-    iscale_(A::Array{T,N}, B::Array{T,N}) where {T<:CFloat,N} = VML.divide(A,B)
-    iscale!(A::Array{T,N}, B::Array{T,N}) where {T<:CFloat,N} = VML.divide!(A,A,B)
-
-    IVERBOSE && load_note("VML")
+    IVERBOSE && load_note("IntelVectorMath")
 end
-=#
 
 #========== The End ==========#

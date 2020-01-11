@@ -5,20 +5,22 @@
 ```
 ] add ArrayAllez
 
-add  Yeppp  Flux  AppleAccelerate
+add  Yeppp  AppleAccelerate  IntelVectorMath
 ```
 
 ### `log! ∘ exp!`
 
 This began as a way to more conveniently choose between [Yeppp!](https://github.com/JuliaMath/Yeppp.jl) 
-and [AppleAccelerate](https://github.com/JuliaMath/AppleAccelerate.jl). Or neither... just loops with `@threads`?
+and [AppleAccelerate](https://github.com/JuliaMath/AppleAccelerate.jl) and [IntelVectorMath](https://github.com/JuliaMath/IntelVectorMath.jl).
+Or none of these... just loops with `@threads`?
 
 ```julia
-x = rand(5);
+x = rand(1,100);
 
-y = exp.(x)  # = exp0(x) 
+y = exp0(x)  # precisely = exp.(x)
+x ≈ log!(y)  # in-place, just a loop
 
-using Yeppp  # or using AppleAccelerate
+using AppleAccelerate  # or using IntelVectorMath, or using Yeppp
 
 y = exp!(x)  # with ! mutates
 x = log_(y)  # with _ copies
@@ -41,16 +43,18 @@ m
 
 ### `∇`
 
-These commands all make some attempt to define [Flux](https://github.com/FluxML/Flux.jl) gradients, 
-but caveat emptor. There is also an `exp!!` which mutates both its forward input and its backward gradient, 
+These commands all make some attempt to define gradients for use with 
+[Tracker](https://github.com/FluxML/Tracker.jl) ans 
+[Zygote](https://github.com/FluxML/Zygote.jl), but caveat emptor. 
+There is also an `exp!!` which mutates both its forward input and its backward gradient, 
 which may be a terrible idea.
 
 ```julia
-using Flux
+using Tracker
 x = param(randn(5));
 y = exp_(x)
 
-Flux.back!(sum_(exp!(x)))
+Tracker.back!(sum_(exp!(x)))
 x.data == y # true
 x.grad
 ```
@@ -106,7 +110,7 @@ end
 
 ### See Also
 
-* [Vectorize.jl](https://github.com/rprechelt/Vectorize.jl) is a more comprehensive wrapper, including Intel MKL. 
+* [Vectorize.jl](https://github.com/rprechelt/Vectorize.jl) is a more comprehensive wrapper. 
 
-* [Strided.jl](https://github.com/Jutho/Strided.jl) adds @threads to broadcasting. 
+* [Strided.jl](https://github.com/Jutho/Strided.jl) adds `@threads` to broadcasting. 
 

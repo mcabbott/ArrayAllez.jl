@@ -116,9 +116,3 @@ end
     invA, Δ -> (invA_copy .= -1 .* Δ .* b .* invA_copy .^ 2 , nothing) # total one copy
 end
 
-
-using FillArrays
-
-@adjoint function sum_(A::AbstractArray)
-    sum(A), Δ -> (Ones(A) ,)
-end
