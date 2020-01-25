@@ -74,7 +74,6 @@ log_(name::Symbol, A) = log!(similar_(name, A), A)
     inv!(A, b::Number) ≈ b ./ A
 
 And `inv_(A)` which copies, and `inv0(A)` simple broadcasting.
-Multi-threaded when `length(A) >= $TH_INV`.
 Will be handled by `AppleAccelerate` if you load it.
 """
 function inv! end
@@ -89,14 +88,8 @@ inv!(A::AbstractArray, b::Number=1) = inv!(A, A, 1)
 inv!(a::Number) = 1/a
 function inv!(C::AbstractArray, A::AbstractArray, b::Number=1)
     @assert size(A)==size(C)
-    if length(A) < TH_INV
-        for I in eachindex(A)
-            @inbounds C[I] = b / A[I]
-        end
-    else
-        Threads.@threads for I in eachindex(A)
-            @inbounds C[I] = b / A[I]
-        end
+    @avx for I in eachindex(A)
+        C[I] = b / A[I]
     end
     C
 end
