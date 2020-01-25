@@ -156,15 +156,15 @@ mycheck(f, x) = ForwardDiff.gradient(z -> sum(sin,f(z)), x) ≈ Tracker.gradient
 
         m = rand(3,7)
 
-        mycheck(z -> log0(z), m)
-        mycheck(z -> log_(z), m)
-        mycheck(z -> log!(z), m)
-        mycheck(z -> log!!(z), m)
+        @test mycheck(z -> log0(z), m)
+        @test_broken mycheck(z -> log_(z), m)
+        @test_broken mycheck(z -> log!(z), m)
+        @test_broken mycheck(z -> log!!(z), m)
 
-        mycheck(z -> exp0(z), m)
-        mycheck(z -> exp_(z), m)
-        mycheck(z -> exp!(z), m)
-        mycheck(z -> exp!!(z), m)
+        @test mycheck(z -> exp0(z), m)
+        @test_broken mycheck(z -> exp_(z), m)
+        @test_broken mycheck(z -> exp!(z), m)
+        @test_broken mycheck(z -> exp!!(z), m)
 
     end
     @testset "scale + inv" begin
