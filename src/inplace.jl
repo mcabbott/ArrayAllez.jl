@@ -1,11 +1,5 @@
 
-if VERSION <= v"1.1"
-    const TH_EXP = 100
-    const TH_INV = 1000
-else
-    const TH_EXP = 5000
-    const TH_INV = 100_000
-end
+using LoopVectorization
 
 #========== exp! log! inv! ==========#
 
@@ -19,9 +13,8 @@ export inv0, inv_, inv!, inv!!
     exp0(A) ≈ exp.(A)
 
 Element-wise in-place exponential, and friends.
-Multi-threaded when `length(A) >= $TH_EXP`.
-Will be handled by `Yeppp` or `AppleAccelerate` or `IntelVectorMath` if you load one of them,
-note that `Yeppp` may well be slower.
+The fast ones `exp!` and `exp_` now use `LoopVectorization`,
+unless you load `Yeppp` or `AppleAccelerate` or `IntelVectorMath`.
 """
 function exp! end
 
@@ -34,14 +27,8 @@ exp!!(A) = exp!(A) # differs in gradient
 
 function exp!(B, A)
     @assert size(A)==size(B)
-    if length(A) < TH_EXP
-        for I in eachindex(A)
-            @inbounds B[I] = exp1(A[I])
-        end
-    else
-        Threads.@threads for I in eachindex(A)
-            @inbounds B[I] = exp1(A[I])
-        end
+    @avx for I in eachindex(A)
+        B[I] = exp(A[I])
     end
     B
 end
@@ -52,8 +39,8 @@ end
     log0(A) = log.(A)
 
 Element-wise in-place natural logarithm, and friends.
-Multi-threaded when `length(A) >= $TH_EXP`.
-Will be handled by `Yeppp` or `AppleAccelerate` or `IntelVectorMath` if you load one of them.
+The fast ones `log!` and `log_` now use `LoopVectorization`,
+unless you load `Yeppp` or `AppleAccelerate` or `IntelVectorMath`.
 """
 function log! end
 
@@ -66,14 +53,8 @@ log!!(A) = log!(A) # differs in gradient
 
 function log!(B, A)
     @assert size(A)==size(B)
-    if length(A) < TH_EXP
-        for I in eachindex(A)
-            @inbounds B[I] = log1(A[I])
-        end
-    else
-        Threads.@threads for I in eachindex(A)
-            @inbounds B[I] = log1(A[I])
-        end
+    @avx for I in eachindex(A)
+        B[I] = log(A[I])
     end
     B
 end
