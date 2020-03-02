@@ -81,7 +81,7 @@ end
     c = rand(3)
     cc = rand(3,3)
 
-    @test c ⊙ c == sum(c .* c)
+    @test c ⊙ c ≈ sum(c .* c)
     @test cc ⊙ c ≈ cc * c
     @test cc ⊙ cc ≈ cc * cc
     @test c' ⊙ cc ≈ c' * cc
