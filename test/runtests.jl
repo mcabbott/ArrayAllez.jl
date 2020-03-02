@@ -99,8 +99,29 @@ end
     @test dimnames(a ⊙ abc) == (:b, :c)
     @test dimnames(abc ⊙ cde) == (:a, :b, :d, :e)
     @test_throws Exception abc ⊙ abc
-end
 
+end
+@testset "bmm" begin
+
+    two = rand(3,3)
+    three = rand(3,3,3);
+    four = rand(3,3,3,3);
+
+    @test two ⨱ two     ≈ two * two
+    @test three ⨱ two   ≈ cat([three[:,:,k] * two[:,k] for k=1:3]..., dims=2)
+    @test three ⨱ three ≈ cat([three[:,:,k] * three[:,:,k] for k=1:3]..., dims=3)
+    @test four ⨱ three  ≈ reshape(cat([four[:,:,k,l] * three[:,k,l] for k=1:3, l=1:3]..., dims=3),3,3,3)
+    @test four ⨱ four   ≈ reshape(cat([four[:,:,k,l] * four[:,:,k,l] for k=1:3, l=1:3]..., dims=3),3,3,3,3)
+
+    abxy = NamedDimsArray(four, (:a, :b, :x, :y));
+    bxy = NamedDimsArray(three, (:b, :x, :y));
+    bc_y = NamedDimsArray(four, (:b, :c, :_, :y));
+
+    @test dimnames(abxy ⨱ bxy) == (:a, :x, :y)
+    @test dimnames(abxy ⨱ bc_y) == (:a, :c, :x, :y)
+    @test_throws ArgumentError abxy ⊙ abxy
+
+end
 @testset "dropdims" begin
 
     @dropdims begin
