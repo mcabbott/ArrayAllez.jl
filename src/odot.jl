@@ -74,9 +74,13 @@ odot(A::NamedDimsArray, B::AbstractArray) = named_odot(A, B)
 odot(A::AbstractArray, B::NamedDimsArray) = named_odot(A, B)
 
 function named_odot(A, B)
+    LA, LB = NamedDims.dimnames(A), NamedDims.dimnames(B)
+    last(LA) == first(LB) || throw(ArgumentError(string(
+        "contracted names must match! got ", LA, " ⊙ ", LB )))
+
     C = odot(NamedDims.unname(A), NamedDims.unname(B))
     C isa AbstractArray || return C # scalar case
-    LA, LB = NamedDims.dimnames(A), NamedDims.dimnames(B)
+
     LC = ntuple(ndims(A) + ndims(B) - 2) do d
         d < ndims(A) ? LA[d] : LB[d-ndims(A)+2]
     end

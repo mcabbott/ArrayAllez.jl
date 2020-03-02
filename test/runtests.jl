@@ -11,6 +11,8 @@ else
     @info "testing without AppleAccelerate (unavailable) nor Yeppp"
 end
 
+using NamedDims
+
 @testset "simple" begin
     @testset "small" begin
 
@@ -90,6 +92,13 @@ end
 
     @test vec(ccc ⊙ ccc) ≈ vec(Ic * cI)
 
+    a = NamedDimsArray(c, :a)
+    abc = NamedDimsArray(ccc, (:a, :b, :c))
+    cde = NamedDimsArray(ccc, (:c, :d, :e))
+
+    @test dimnames(a ⊙ abc) == (:b, :c)
+    @test dimnames(abc ⊙ cde) == (:a, :b, :d, :e)
+    @test_throws Exception abc ⊙ abc
 end
 
 @testset "dropdims" begin
