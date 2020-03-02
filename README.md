@@ -99,6 +99,10 @@ using Einsum
 @einsum p3[i,j,k] := three[i,j,s] * mat[s,k]  # same
 ```
 
+There are also variants `⊙ˡ, ⊙ʳ` with different gradient definitions,
+specifying that only what's on the left (or right) needs to be tracked. 
+(Likewise `*ˡ, *ʳ` for ordinary `*`.)
+
 ### `@dropdims`
 
 This macro wraps reductions like `sum(A; dims=...)` in `dropdims()`.
