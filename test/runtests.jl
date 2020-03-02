@@ -13,7 +13,7 @@ end
 
 using NamedDims
 
-@testset "simple" begin
+@testset "exp/log/inv/scale" begin
     @testset "small" begin
 
         m = rand(3,7)
@@ -114,6 +114,7 @@ end
 
 end
 
+@info "loading Tracker"
 using Tracker
 using Tracker: TrackedArray, gradcheck, back!, data, grad
 
@@ -124,25 +125,7 @@ using ForwardDiff
 
 mycheck(f, x) = ForwardDiff.gradient(z -> sum(sin,f(z)), x) ≈ Tracker.gradient(z -> sum(sin,f(z)), x)[1]
 
-@testset "gradients" begin
-    @testset "* left & right" begin
-
-        @test gradient(*ˡ, 2,3) == (3, nothing)
-        @test gradient(sum∘*ˡ, rand(2,2), ones(2,2)) == ([2 2; 2 2], nothing)
-
-        @test gradient(*ʳ, 2,3) == (nothing, 2)
-        @test gradient(sum∘*ʳ, ones(2,2), rand(2,2)) == (nothing, [2 2; 2 2])
-
-    end
-    @testset "odot" begin
-
-        @test gradient(⊙ˡ, 2,3) == (3, nothing)
-        @test gradient(sum∘⊙ˡ, rand(2,2), ones(2,2,2,2)) == ([8 8; 8 8], nothing)
-
-        @test gradient(⊙ʳ, 2,3) == (nothing, 2)
-        @test gradient(sum∘⊙ʳ, ones(2,2,2), rand(2,2)) == (nothing, [4 4; 4 4])
-
-    end
+@testset "Tracker gradients" begin
     @testset "exp + log" begin
 
         @test gradtest(exp0, (2,3))
@@ -270,3 +253,29 @@ mycheck(f, x) = ForwardDiff.gradient(z -> sum(sin,f(z)), x) ≈ Tracker.gradient
 
     end
 end
+
+#=
+@info "loading Zygote"
+using Zygote: Zygote
+
+@testset "Zygote gradients" begin
+    @testset "* left & right" begin
+
+        @test Zygote.gradient(*ˡ, 2,3) == (3, nothing)
+        @test Zygote.gradient(sum∘*ˡ, rand(2,2), ones(2,2)) == ([2 2; 2 2], nothing)
+
+        @test Zygote.gradient(*ʳ, 2,3) == (nothing, 2)
+        @test Zygote.gradient(sum∘*ʳ, ones(2,2), rand(2,2)) == (nothing, [2 2; 2 2])
+
+    end
+    @testset "odot" begin
+
+        @test Zygote.gradient(⊙ˡ, 2,3) == (3, nothing)
+        @test Zygote.gradient(sum∘⊙ˡ, rand(2,2), ones(2,2,2,2)) == ([8 8; 8 8], nothing)
+
+        @test Zygote.gradient(⊙ʳ, 2,3) == (nothing, 2)
+        @test Zygote.gradient(sum∘⊙ʳ, ones(2,2,2), rand(2,2)) == (nothing, [4 4; 4 4])
+
+    end
+end
+=#
