@@ -75,8 +75,10 @@ odot(A::AbstractArray, B::NamedDimsArray) = named_odot(A, B)
 
 function named_odot(A, B)
     LA, LB = NamedDims.dimnames(A), NamedDims.dimnames(B)
-    last(LA) == first(LB) || throw(ArgumentError(string(
+    if last(LA) != :_ && first(LB) != :_
+        last(LA) == first(LB) || throw(ArgumentError(string(
         "contracted names must match! got ", LA, " ⊙ ", LB )))
+    end
 
     C = odot(NamedDims.unname(A), NamedDims.unname(B))
     C isa AbstractArray || return C # scalar case

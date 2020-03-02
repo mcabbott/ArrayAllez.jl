@@ -4,9 +4,49 @@
 
 ```
 ] add ArrayAllez
-
-add  Yeppp  AppleAccelerate  IntelVectorMath
 ```
+
+### `⊙ = \odot`
+
+Matrix multiplication, on the last index of one tensor & the first index of the next:
+
+```julia
+three = rand(2,2,5);
+mat = rand(5,2);
+
+p1 = three ⊙ mat
+
+p2 = reshape(reshape(three,:,5) * mat ,2,2,2) # same
+
+using Einsum
+@einsum p3[i,j,k] := three[i,j,s] * mat[s,k]  # same
+```
+
+There are also variants `⊙ˡ, ⊙ʳ` with different gradient definitions,
+specifying that only what's on the left (or right) needs to be tracked. 
+(Likewise `*ˡ, *ʳ` for ordinary `*`.)
+
+### `bmm == ⨱ (\timesbar)`
+
+Batched matrix multiplication, which understands all trailing dimensions:
+
+```julia
+four = rand(2,3,8,9);
+three = rand(3,8,9);
+
+size(four ⨱ three) == (2, 8, 9)
+(four ⨱ three)[:,1,1] ≈ four[:,:,1,1] * three[:,1,1]
+
+using Einsum
+@einsum out[i,x,y] := four[i,j,x,y] * three[j,x,y];
+out ≈ four ⨱ three
+```
+
+Corresponding `⨱ˡ, ⨱ʳ` are not yet defined.
+
+### `dimnames`
+
+Both `⊙` and `⨱` will propagate names from [NamedDims.jl](https://github.com/invenia/NamedDims.jl).
 
 ### `log! ∘ exp!`
 
@@ -77,31 +117,6 @@ Array_{Float64}(:new, 5,1000) # @btime 200 ns, 32 bytes
 
 inv_(:inv, x) # most of the _ functions can opt-in
 ```
-
-### `broadsum`
-
-This was an attempt to keep broadcasting un-`materialize`d, 
-now done better by [LazyArrays.jl](https://github.com/JuliaArrays/LazyArrays.jl#broadcasting). 
-
-### `⊙ = \odot`
-
-Matrix multiplication, on the last index of one tensor & the first index of the next:
-
-```julia
-three = rand(2,2,5);
-mat = rand(5,2);
-
-p1 = three ⊙ mat
-
-p2 = reshape(reshape(three,:,5) * mat ,2,2,2) # same
-
-using Einsum
-@einsum p3[i,j,k] := three[i,j,s] * mat[s,k]  # same
-```
-
-There are also variants `⊙ˡ, ⊙ʳ` with different gradient definitions,
-specifying that only what's on the left (or right) needs to be tracked. 
-(Likewise `*ˡ, *ʳ` for ordinary `*`.)
 
 ### `@dropdims`
 

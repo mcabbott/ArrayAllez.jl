@@ -23,4 +23,10 @@ include("dropdims.jl")
 
 include("odot.jl")
 
+include("batchmul.jl")
+
+# @init @require OMEinsum = "ebe7aa44-baf0-506c-a96f-8464559b3922" begin
+#     include("omeinsum.jl")
+# end
+
 end
