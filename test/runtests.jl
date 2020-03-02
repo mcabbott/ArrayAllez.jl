@@ -4,11 +4,11 @@ using Test
 @static if Sys.isapple()
     using AppleAccelerate
     @info "testing with AppleAccelerate (always done on Apple machines)"
-elseif rand() > 0.5
+elseif Sys.isunix()
     using Yeppp
-    @info "testing with Yeppp (this happens half the time on non-Apple machines)"
+    @info "testing with Yeppp (always done on Linux machines)"
 else
-    @info "testing without Yeppp (because of a coin flip) nor AppleAccelerate (unavailable)"
+    @info "testing without AppleAccelerate (unavailable) nor Yeppp"
 end
 
 @testset "simple" begin
@@ -79,6 +79,7 @@ end
     c = rand(3)
     cc = rand(3,3)
 
+    @test c ⊙ c == sum(c .* c)
     @test cc ⊙ c ≈ cc * c
     @test cc ⊙ cc ≈ cc * cc
     @test c' ⊙ cc ≈ c' * cc
@@ -88,7 +89,6 @@ end
     cI = reshape(ccc,3,9)
 
     @test vec(ccc ⊙ ccc) ≈ vec(Ic * cI)
-    @test vec(ccc ↓ ccc) ≈ vec(Ic * cI)
 
 end
 
@@ -116,6 +116,24 @@ using ForwardDiff
 mycheck(f, x) = ForwardDiff.gradient(z -> sum(sin,f(z)), x) ≈ Tracker.gradient(z -> sum(sin,f(z)), x)[1]
 
 @testset "gradients" begin
+    @testset "* left & right" begin
+
+        @test gradient(*ˡ, 2,3) == (3, nothing)
+        @test gradient(sum∘*ˡ, rand(2,2), ones(2,2)) == ([2 2; 2 2], nothing)
+
+        @test gradient(*ʳ, 2,3) == (nothing, 2)
+        @test gradient(sum∘*ʳ, ones(2,2), rand(2,2)) == (nothing, [2 2; 2 2])
+
+    end
+    @testset "odot" begin
+
+        @test gradient(⊙ˡ, 2,3) == (3, nothing)
+        @test gradient(sum∘⊙ˡ, rand(2,2), ones(2,2,2,2)) == ([8 8; 8 8], nothing)
+
+        @test gradient(⊙ʳ, 2,3) == (nothing, 2)
+        @test gradient(sum∘⊙ʳ, ones(2,2,2), rand(2,2)) == (nothing, [4 4; 4 4])
+
+    end
     @testset "exp + log" begin
 
         @test gradtest(exp0, (2,3))
