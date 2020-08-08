@@ -14,7 +14,7 @@ Requires = "ae029012-a4dd-5104-9daa-d747884805df"
 ZygoteRules = "700de1a5-db45-46bc-99cf-38207098b444"
 
 [compat]
-FillArrays = "0.6, 0.7, 0.8"
+FillArrays = "0.6, 0.7, 0.8, 0.9"
 LRUCache = "0.3, 1"
 MacroTools = "0.4, 0.5"
 NNlib = "0.6.5, 0.7"
