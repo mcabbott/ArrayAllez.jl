@@ -1,6 +1,6 @@
 # ArrayAllez.jl
 
-[![Build Status](https://travis-ci.org/mcabbott/ArrayAllez.jl.svg?branch=master)](https://travis-ci.org/mcabbott/ArrayAllez.jl)
+[![Build Status](https://travis-ci.com/mcabbott/ArrayAllez.jl.svg?branch=master)](https://travis-ci.com/mcabbott/ArrayAllez.jl)
 
 ```
 ] add ArrayAllez
