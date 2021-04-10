@@ -1,6 +1,7 @@
 # ArrayAllez.jl
 
-[![Build Status](https://travis-ci.com/mcabbott/ArrayAllez.jl.svg?branch=master)](https://travis-ci.com/mcabbott/ArrayAllez.jl)
+[![Travis CI](https://travis-ci.com/mcabbott/ArrayAllez.jl.svg?branch=master)](https://travis-ci.com/mcabbott/ArrayAllez.jl)
+[![Github CI](https://github.com/mcabbott/ArrayAllez.jl/workflows/CI/badge.svg)](https://github.com/mcabbott/ArrayAllez.jl/actions?query=workflow%3ACI+branch%3Amaster)
 
 ```
 ] add ArrayAllez
