@@ -5,10 +5,10 @@ using Test
     using AppleAccelerate
     @info "testing with AppleAccelerate (always done on Apple machines)"
 elseif Sys.isunix()
-    using Yeppp
-    @info "testing with Yeppp (always done on Linux machines)"
+    using IntelVectorMath
+    @info "testing with IntelVectorMath (always done on Linux machines)"
 else
-    @info "testing without AppleAccelerate (unavailable) nor Yeppp"
+    @info "testing without AppleAccelerate nor IntelVectorMath, to check fallbacks"
 end
 
 @testset "exp/log/inv/scale" begin
