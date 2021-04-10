@@ -2,6 +2,8 @@ module ArrayAllez
 
 include("cache.jl")
 
+include("threads.jl")
+
 include("inplace.jl")
 
 @init @require Tracker = "9f7883ad-71c0-57eb-9f7f-b5c9e6d3789c" begin
