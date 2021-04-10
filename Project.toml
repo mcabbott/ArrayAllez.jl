@@ -1,7 +1,7 @@
 name = "ArrayAllez"
 uuid = "42ed035d-9ad9-5097-b4a3-321d9b0dde85"
 license = "MIT"
-version = "0.0.7"
+version = "0.0.8"
 
 [deps]
 # FillArrays = "1a297f60-69ca-5386-bcde-b61e274b549b"
@@ -21,7 +21,7 @@ MacroTools = "0.4, 0.5"
 # NamedDims = "0.2"
 Requires = "0.5, 1"
 ZygoteRules = "0.1, 0.2"
-julia = "1"
+julia = "1.4"
 
 [extras]
 AppleAccelerate = "13e28ba4-7ad8-5781-acae-3021b1ed3924"
