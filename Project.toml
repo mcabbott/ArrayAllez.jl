@@ -33,4 +33,4 @@ Tracker = "9f7883ad-71c0-57eb-9f7f-b5c9e6d3789c"
 # Yeppp = "6310b701-1812-5374-a82f-9f6f2d54a40a"
 
 [targets]
-test = ["Test", "AppleAccelerate", "Tracker", "ForwardDiff"]
+test = ["Test", "AppleAccelerate", "IntelVectorMath", "Tracker", "ForwardDiff"]
