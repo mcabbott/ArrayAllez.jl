@@ -11,8 +11,6 @@ else
     @info "testing without AppleAccelerate (unavailable) nor Yeppp"
 end
 
-using NamedDims
-
 @testset "exp/log/inv/scale" begin
     @testset "small" begin
 
@@ -76,52 +74,6 @@ using NamedDims
     end
 end
 
-@testset "odot" begin
-
-    c = rand(3)
-    cc = rand(3,3)
-
-    @test c ⊙ c ≈ sum(c .* c)
-    @test cc ⊙ c ≈ cc * c
-    @test cc ⊙ cc ≈ cc * cc
-    @test c' ⊙ cc ≈ c' * cc
-
-    ccc = rand(3,3,3)
-    Ic = reshape(ccc,9,3)
-    cI = reshape(ccc,3,9)
-
-    @test vec(ccc ⊙ ccc) ≈ vec(Ic * cI)
-
-    a = NamedDimsArray(c, :a)
-    abc = NamedDimsArray(ccc, (:a, :b, :c))
-    cde = NamedDimsArray(ccc, (:c, :d, :e))
-
-    @test dimnames(a ⊙ abc) == (:b, :c)
-    @test dimnames(abc ⊙ cde) == (:a, :b, :d, :e)
-    @test_throws Exception abc ⊙ abc
-
-end
-@testset "bmm" begin
-
-    two = rand(3,3)
-    three = rand(3,3,3);
-    four = rand(3,3,3,3);
-
-    @test two ⨱ two     ≈ two * two
-    @test three ⨱ two   ≈ cat([three[:,:,k] * two[:,k] for k=1:3]..., dims=2)
-    @test three ⨱ three ≈ cat([three[:,:,k] * three[:,:,k] for k=1:3]..., dims=3)
-    @test four ⨱ three  ≈ reshape(cat([four[:,:,k,l] * three[:,k,l] for k=1:3, l=1:3]..., dims=3),3,3,3)
-    @test four ⨱ four   ≈ reshape(cat([four[:,:,k,l] * four[:,:,k,l] for k=1:3, l=1:3]..., dims=3),3,3,3,3)
-
-    abxy = NamedDimsArray(four, (:a, :b, :x, :y));
-    bxy = NamedDimsArray(three, (:b, :x, :y));
-    bc_y = NamedDimsArray(four, (:b, :c, :_, :y));
-
-    @test dimnames(abxy ⨱ bxy) == (:a, :x, :y)
-    @test dimnames(abxy ⨱ bc_y) == (:a, :c, :x, :y)
-    @test_throws ArgumentError abxy ⊙ abxy
-
-end
 @testset "dropdims" begin
 
     @dropdims begin
